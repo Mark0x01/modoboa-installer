@@ -1,1 +1,5 @@
+FreeBSD requires the following package built from ports.
+
+security_clamav, mail_dovecot, mail_dovecot-pigeonhole, www_nginx, databases_opendbx, mail_opendkim, mail_postfix, mail_spamassassin
+
 
