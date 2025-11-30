@@ -11,6 +11,7 @@ An installer which deploys a complete mail server based on Modoboa.
 
    * Debian 12 and upper
    * Ubuntu Focal Fossa (20.04) and upper
+   * experimental: FreeBSD 13.5   see README.FreeBSD
 
 .. warning::
 
