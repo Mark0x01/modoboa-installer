@@ -9,7 +9,7 @@ With added support for use with FreeBSD.
 NOTE: Due to pkg build differences between Linux and FreeBSD, a number of packages will require building from ports.
 
 Current testing on FreeBSD 13.5 and Postgres 17
-see FreeBSD_Build
+see README.FreeBSD
 
 .. warning::
 
