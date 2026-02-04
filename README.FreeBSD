@@ -1,5 +1,69 @@
 FreeBSD requires the following package built from ports.
 
-security_clamav, mail_dovecot, mail_dovecot-pigeonhole, www_nginx, databases_opendbx, mail_opendkim, mail_postfix, mail_spamassassin
+security_clamav, mail_dovecot, mail_dovecot-pigeonhole, www_nginx, databases_opendbx, mail_opendkim, mail_postfix, mail_spamassassin, sqlite3.
+
+
+
+There are a number of methods to build packages.
+My 'GoTo' for easy, and recommended if you have not done this before, is using Synth.
+
+Or use the Synth settings as a guide to manually configure and build packages.\
+
+It will take quite some time - several hours is normal, especially if a build of rust is required (it is, unless installed prior???)
+ 
+------------------------------------------------------------- 
+#install python 3.11 and rust.
+
+pkg install python3 rust nano bash screen
+
+#get ports
+portsnap fetch
+portsnap extract
+ 
+#Install synth: 
+pkg install synth
+#create a folder for build packages or keep default of /usr/ports/distfiles 
+#run 
+synth configure
+synth prepare-system
+
+nano /usr/local/etc/synth/LiveSystem-build.conf 
+
+#add the following contents:
+
+-----------------------------------------------------------------------
+
+security_amavisd-new_SET+= 7ZIP ARC ARJ CAB DOCS FILE IPV6 LZOP PGSQL RPM SPAMASSASIN UNRAR UNZOO ZOO 
+security_clamav_SET+= ARC ARJ  DOCS LHA MILTER PCRE UNRAR UNZOO
+mail_dovecot_SET+= DOCS EXAMPLES GSSAPI_NONE LIBWRAP LZ4 MYSQL PGSQL SQLITE
+mail_dovecot-pigeonhole_SET+= DOCS GSSAPI_NONE MANAGESIEVE
+www_nginx_SET+= DSO FILE_AIO HTTP HTTPV2 HTTP_ADDITION HTTP_AUTH_REQ HTTP_CACHE HTTP_DAV HTTP_FLV HTTP_GUNZIP_FILTER HTTP_GZIP_STATIC 
+www_nginx_SET+= HTTP_MP4 HTTP_MP4_H264 HTTP_RANDOM_INDEX HTTP_MP4 HTTP_REALIP HTTP_SECURE_LINK HTTP_STATUS HTTP_SLICE HTTP_SSL HTTP_SUB IPV6
+www_nginx_SET+= MAIL_SSL PCRE_ONE STREAM STREAM_SSL STREAM_SSL_PREREAD THREADS WWW
+databases_opendbx_SET+= MYSQL NLS PGSQL SQLITE SQLITE3
+mail_opendkim_SET+= DOCS FILTER MEMCACHED OPENDBX QUERY_CACHE STOCK_RESOLVER
+mail_opendkim_UNSET= UNBOUND
+mail_postfix_SET+= BLACKLISTD CDB DOCS EAI PGSQL SQLITE TLS
+mail_spamassassin_SET+= AS_ROOT DKIM DOCS GNUPG SPF_QUERY SSL PYZOR RAZOR
+databases_sqlite3_SET+= SESSION
+
+#This will build the pkg with the options needed rather than configuring each one separately.
+#Synth will add a repo to include the port packages, as well as the standard freebsd ones.
+
+#Note: there will be many other packages build as well, which are all the dependancies for the build.
+
+#Then build one, all or in batches with: 
+
+synth  just-build security/amavisd-new security/clamav mail/dovecot@pgsql mail/dovecot-pigeonhole@pgsql www/nginx databases/opendbx mail/postfix mail/spamassassin
+
+synth  just-build mail/dovecot@pgsql mail/dovecot-pigeonhole@pgsql www/nginx databases/opendbx mail/postfix mail/spamassassin databases/sqlite3
+
+
+#If you prefer mysql (as yet untested), substitute mysql for pgsql
+
+#make it into a local repo to allow mixed source (ports and pre-built)
+cd /var/synth/live_packages
+pkg repo .
+
 
 
