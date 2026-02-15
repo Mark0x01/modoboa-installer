@@ -217,12 +217,18 @@ class Modoboa(base.Installer):
             path = "supervisor=/etc/supervisord.d/policyd.ini"
         config_files.append(path)
 
-        # Add worker for dkim if needed
+        # Add RQ workers if needed
         if self.modoboa_2_2_or_greater:
             config_files.append(
                 "supervisor-rq-dkim=/etc/supervisor/conf.d/modoboa-dkim-worker.conf")
             config_files.append(
                 "supervisor-rq-base=/etc/supervisor/conf.d/modoboa-base-worker.conf")
+            config_files.append(
+                "supervisor-rq-dovecot=/etc/supervisor/conf.d/modoboa-dovecot-worker.conf")
+            config_files.append(
+                "supervisor-rq-privileged=/etc/supervisor/conf.d/modoboa-privileged-worker.conf")
+            config_files.append(
+                "supervisor-rq-scheduler=/etc/supervisor/conf.d/rq-scheduler.conf")
         return config_files
 
     def get_template_context(self):

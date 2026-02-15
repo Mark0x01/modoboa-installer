@@ -99,9 +99,12 @@ def is_dist_debian_based() -> (bool, str):
     status, codename = exec_cmd("lsb_release -c -s")
     codename = codename.decode().strip().lower()
     return codename in [
-        "bionic", "bookworm", "bullseye", "buster",
-        "focal", "jammy", "jessie", "sid", "stretch",
-        "trusty", "wheezy", "xenial"
+        # Debian
+        "duke", "forky", "trixie",  "bookworm", "bullseye",
+        "buster","jessie", "sid", "stretch", "wheezy",
+        # Ubuntu
+        "resolute", "questing", "plucky", "noble", "bionic", 
+        "focal", "jammy", "trusty",  "xenial"
     ], codename
 
 

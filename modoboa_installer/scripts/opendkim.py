@@ -106,10 +106,18 @@ class Opendkim(base.Installer):
             dbservice = "mysqld.service"
         else:
             dbservice = "postgresql.service"
-        pattern = (
-            "s/^After=(.*)$/After=$1 {}/".format(dbservice))
-        utils.exec_cmd(
-            "perl -pi -e '{}' /lib/systemd/system/opendkim.service".format(pattern))
+        # Use systemd drop-in override (survives package upgrades)
+        override_dir = "/etc/systemd/system/opendkim.service.d"
+        utils.mkdir(
+            override_dir,
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
+            stat.S_IROTH | stat.S_IXOTH,
+            0, 0
+        )
+        override_file = os.path.join(override_dir, "database.conf")
+        with open(override_file, "w") as f:
+            f.write("[Unit]\nAfter={0}\nRequires={0}\n".format(dbservice))
+        utils.exec_cmd("systemctl daemon-reload")
 
     def restore(self):
         """Restore keys."""
