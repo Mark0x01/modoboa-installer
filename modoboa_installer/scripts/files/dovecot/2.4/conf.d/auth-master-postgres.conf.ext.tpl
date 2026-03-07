@@ -8,7 +8,7 @@
 #passdb master-passwd-file {
 #  driver = passwd-file
 #  master = yes
-#  passwd_file_path = /etc/dovecot/master-users
+#  passwd_file_path = %{etc_prefix}/dovecot/master-users
 #}
 
 sql_driver = %db_driver

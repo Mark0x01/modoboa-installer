@@ -17,7 +17,7 @@ oauth2 {
 #  oauth2_local_validation {
 #    dict fs {
 #      fs posix {
-#        prefix = /etc/dovecot/oauth2-keys/
+#        prefix = %{etc_prefix}/dovecot/oauth2-keys/
 #      }
 #    }
 #  }

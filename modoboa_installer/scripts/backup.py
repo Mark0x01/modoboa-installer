@@ -40,7 +40,6 @@ class Backup:
 
     def validate_path(self, path):
         """Check basic condition for backup directory."""
-
         path_exists = os.path.exists(path)
 
         if path_exists and os.path.isfile(path):

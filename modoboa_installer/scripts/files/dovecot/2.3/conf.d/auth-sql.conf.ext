@@ -6,12 +6,12 @@ passdb {
   driver = sql
 
   # Path for SQL configuration file, see example-config/dovecot-sql.conf.ext
-  args = /etc/dovecot/dovecot-sql.conf.ext
+  args = %{etc_prefix}/dovecot/dovecot-sql.conf.ext
 }
 
 passdb {
   driver = sql
-  args = /etc/dovecot/dovecot-sql-master.conf.ext
+  args = %{etc_prefix}/dovecot/dovecot-sql-master.conf.ext
   master = yes
   pass = yes
 }
@@ -25,7 +25,7 @@ userdb {
 
 userdb {
   driver = sql
-  args = /etc/dovecot/dovecot-sql.conf.ext
+  args = %{etc_prefix}/dovecot/dovecot-sql.conf.ext
 }
 
 # If you don't have any user-specific settings, you can avoid the user_query

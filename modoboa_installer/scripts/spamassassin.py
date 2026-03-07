@@ -2,9 +2,14 @@
 
 import os
 import pwd
-
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+    
 from .. import package
 from .. import utils
+from .. import system
 
 from . import base
 from . import install
@@ -18,7 +23,8 @@ class Spamassassin(base.Installer):
     no_daemon = True
     packages = {
         "deb": ["spamassassin", "pyzor"],
-        "rpm": ["spamassassin", "pyzor"]
+        "rpm": ["spamassassin", "pyzor"],
+        "pkg": ["spamassassin"]
     }
     with_db = True
     config_files = ["v310.pre", "local.cf"]
@@ -30,6 +36,8 @@ class Spamassassin(base.Installer):
         else:
             fname = "bayes_mysql.sql"
         schema = "/usr/share/doc/spamassassin/sql/{}".format(fname)
+        if package.backend.FORMAT == "pkg":
+            schema = "/usr/local/share/doc/spamassassin/sql/{}".format(fname)
         if not os.path.exists(schema):
             version = package.backend.get_installed_version("spamassassin")
             version = version.replace(".", "_")
@@ -53,6 +61,10 @@ class Spamassassin(base.Installer):
                 self.dbname, self.dbhost, self.dbport)
         context.update({
             "store_module": store_module, "dsn": dsn, "dcc_enabled": "#"})
+# now done in run.py
+#        if package.backend.FORMAT == "pkg":
+#            context.update({"config_dir": "/usr/local/etc/mail/spamassassin", "pyzor_bin_path": "/usr/local/bin/pyzor"})
+
         return context
 
     def post_run(self):
@@ -61,3 +73,9 @@ class Spamassassin(base.Installer):
         if utils.dist_name() in ["debian", "ubuntu"]:
             utils.exec_cmd(
                 "perl -pi -e 's/^CRON=0/CRON=1/' /etc/cron.daily/spamassassin")
+
+        if 'freebsd' in utils.dist_name():
+            #daemon sa-spamd, rc name spamd. 
+              utils.exec_cmd("sa-update")
+              system.enable_service("spamd")
+              system.restart_service("sa-spamd")

@@ -3,22 +3,31 @@
 import os
 import pwd
 import stat
-
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 from .. import utils
 
 from . import base
 
 
 class Razor(base.Installer):
-
     """Razor installer."""
 
     appname = "razor"
     no_daemon = True
     packages = {
         "deb": ["razor"],
-        "rpm": ["perl-Razor-Agent"]
+        "rpm": ["perl-Razor-Agent"],
+        "pkg": ["razor-agents", "p5-Digest-SHA1", "py311-pyzor"]
     }
+    def get_template_context(self):
+        context = super(Razor, self).get_template_context()
+        context.update({
+            "config_dir", "/usr/local/etc/razor",
+            "pyzor_bin_path", "/usr/local/bin/pyzor"
+            })
 
     def post_run(self):
         """Additional tasks."""

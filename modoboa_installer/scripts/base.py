@@ -126,6 +126,8 @@ class Installer:
         }
         for option, value in self.config.items("general"):
             context[option] = value
+        for option, value in self.config.items("os"):   
+            context[option] = value 
         for option, value in self.config.items(self.appname):
             context[option] = value
         for section in self.config.sections():
@@ -167,8 +169,12 @@ class Installer:
                 dstname = ftpl
             src = self.get_file_path("{}.tpl".format(ftpl))
             dst = dstname
+        
             if not dst.startswith("/"):
                 dst = os.path.join(self.config_dir, dst)
+            if utils.ENV.get("debug"):
+                utils.printcolor(
+                   "base.py#175 : src: {}, dst: (), context: {}".format(src,dst,context),utils.YELLOW)
             utils.copy_from_template(src, dst, context)
 
     def backup(self, path):

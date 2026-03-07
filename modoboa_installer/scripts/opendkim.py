@@ -8,7 +8,7 @@ import stat
 from .. import database
 from .. import package
 from .. import utils
-
+from .. import system
 from . import base
 
 
@@ -18,21 +18,35 @@ class Opendkim(base.Installer):
     appname = "opendkim"
     packages = {
         "deb": ["opendkim"],
-        "rpm": ["opendkim"]
+        "rpm": ["opendkim"],
+        "pkg": ["opendkim"]
     }
     config_files = ["opendkim.conf", "opendkim.hosts"]
 
+    def get_daemon_name(self):
+        """Return appropriate daemon name."""
+        if package.backend.FORMAT !== "pkg":
+            return "opendkim"
+        return "milter-opendkim"
+        
     def get_packages(self):
         """Additional packages."""
         packages = super(Opendkim, self).get_packages()
         if package.backend.FORMAT == "deb":
             packages += ["libopendbx1-{}".format(self.db_driver)]
+        elif package.backend.FORMAT == "pkg":
+             packages += ["opendbx"]
+             return packages   
         else:
             dbengine = "postgresql" if self.dbengine == "postgres" else "mysql"
             packages += ["opendbx-{}".format(dbengine)]
         return packages
 
     def install_config_files(self):
+        """ opendkim pkg has no user, so we make one here"""
+        if  package.backend.FORMAT == "pkg":
+          user = self.config.get("opendkim", "user")
+          system.create_user(user)
         """Make sure config directory exists."""
         user = self.config.get("opendkim", "user")
         pw = pwd.getpwnam(user)
@@ -58,7 +72,8 @@ class Opendkim(base.Installer):
             "db_user": self.app_config["dbuser"],
             "db_password": self.app_config["dbpassword"],
             "port": self.app_config["port"],
-            "user": self.app_config["user"]
+            "user": self.app_config["user"],
+            #"prefix" = self.config.get("os","prefix")
         })
         return context
 
@@ -87,37 +102,63 @@ class Opendkim(base.Installer):
         """
         if package.backend.FORMAT == "deb":
             params_file = "/etc/default/opendkim"
+        elif package.backend.FORMAT == "pkg":
+            params_file = "/usr/local/etc/mail/opendkim.conf"
         else:
             params_file = "/etc/opendkim.conf"
         pattern = r"s/^(SOCKET=.*)/#\1/"
         utils.exec_cmd(
             "perl -pi -e '{}' {}".format(pattern, params_file))
-        with open(params_file, "a") as f:
-            f.write('\n'.join([
-                "",
-                'SOCKET="inet:12345@localhost"',
-            ]))
+        #is already set as FreeBSD default
+        if not package.backend.FORMAT == "pkg":
+           with open(params_file, "a") as f:
+               f.write('\n'.join([
+                   "",
+                   'SOCKET="inet:12345@localhost"',
+               ]))
 
         # Make sure opendkim is started after postgresql and mysql,
         # respectively.
-        if (self.dbengine != "postgres" and package.backend.FORMAT == "deb"):
-            dbservice = "mysql.service"
-        elif (self.dbengine != "postgres" and package.backend.FORMAT != "deb"):
-            dbservice = "mysqld.service"
+        if  package.backend.FORMAT == "pkg":
+             #TODO extend this bit
+             if self.dbengine == "postgres":
+                dbservice = "postgresql"
+                pattern = (
+                 "s/^REQUIRE:(.*)$/REQUIRE: $1 {}/".format(dbservice))
+                utils.exec_cmd(
+                     "perl -pi -e '{}' /usr/local/etc/rc.d/milter-opendkim".format(pattern))
+                     # service name doesn't match sysrc name
+                     system.enable_service("milteropendkim")
+                     utils.exec_cmd("sysrc milteropendkim_uid={}".format(self.app_config["user"]))                    
+                     utils.exec_cmd("sysrc -x opendkim_enable")
+
         else:
-            dbservice = "postgresql.service"
-        # Use systemd drop-in override (survives package upgrades)
-        override_dir = "/etc/systemd/system/opendkim.service.d"
-        utils.mkdir(
-            override_dir,
-            stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
-            stat.S_IROTH | stat.S_IXOTH,
-            0, 0
-        )
-        override_file = os.path.join(override_dir, "database.conf")
-        with open(override_file, "w") as f:
-            f.write("[Unit]\nAfter={0}\nRequires={0}\n".format(dbservice))
-        utils.exec_cmd("systemctl daemon-reload")
+          if (self.dbengine != "postgres" and package.backend.FORMAT == "deb"):
+              dbservice = "mysql.service"
+          elif (self.dbengine != "postgres" and package.backend.FORMAT != "deb"):
+              dbservice = "mysqld.service"
+          else:
+              dbservice = "postgresql.service"
+
+        if package.backend.FORMAT != "pkg":
+            pattern = (
+                "s/^After=(.*)$/After=$1 {}/".format(dbservice))
+            utils.exec_cmd(
+                "perl -pi -e '{}' /lib/systemd/system/opendkim.service".format(pattern))
+
+
+            # Use systemd drop-in override (survives package upgrades)
+            override_dir = "/etc/systemd/system/opendkim.service.d"
+            utils.mkdir(
+                override_dir,
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP |
+                stat.S_IROTH | stat.S_IXOTH,
+                0, 0
+             )
+            override_file = os.path.join(override_dir, "database.conf")
+            with open(override_file, "w") as f:
+                f.write("[Unit]\nAfter={0}\nRequires={0}\n".format(dbservice))
+            utils.exec_cmd("systemctl daemon-reload")
 
     def restore(self):
         """Restore keys."""

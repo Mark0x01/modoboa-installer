@@ -33,12 +33,22 @@ class Modoboa(base.Installer):
             "gcc", "gcc-c++", "python3-devel", "libxml2-devel", "libxslt-devel",
             "libjpeg-turbo-devel", "rrdtool-devel", "rrdtool", "libffi-devel",
             "supervisor", "redis"
+        ],
+        "pkg": [
+            "libxslt", "rrdtool", "py311-pip","py311-virtualenv", "py311-setuptools",
+            "py311-supervisor", "bash", "openssl", "redis74", "libjpeg-turbo", "tiff", "openjpeg", "gsed"
         ]
     }
     config_files = [
         "crontab=/etc/cron.d/modoboa",
         "sudoers=/etc/sudoers.d/modoboa",
     ]
+    if utils.dist_name() == "freebsd":
+        utils.exec_cmd("mkdir -p /usr/local/www/modoboa")
+        config_files = [
+             "crontab=/etc/cron.d/modoboa",
+             "sudoers=/usr/local/etc/sudoers.d/modoboa",
+         ]
     with_db = True
     with_user = True
 
@@ -54,6 +64,7 @@ class Modoboa(base.Installer):
         self.dovecot_enabled = self.config.getboolean("dovecot", "enabled")
         self.opendkim_enabled = self.config.getboolean("opendkim", "enabled")
         self.dkim_cron_enabled = False
+        #self.prefix = self.config.get("os", "prefix")
 
     def is_extension_ok_for_version(self, extension, version):
         """Check if extension can be installed with this modo version."""
@@ -89,6 +100,8 @@ class Modoboa(base.Installer):
             ]
         else:
             matrix = compatibility_matrix.COMPATIBILITY_MATRIX[version]
+            # temp use latest beta
+            #packages.append("/usr/local/www/src/modoboa/.[postgresql]")
             packages.append(f"modoboa[{extras}]=={version}")
             for extension in list(self.extensions):
                 if not self.is_extension_ok_for_version(extension, version):
@@ -213,22 +226,41 @@ class Modoboa(base.Installer):
         config_files = super().get_config_files()
         if package.backend.FORMAT == "deb":
             path = "supervisor=/etc/supervisor/conf.d/policyd.conf"
+        elif package.backend.FORMAT == "pkg":
+            path = "supervisor=/usr/local/etc/supervisor/conf.d/policyd.conf"
         else:
             path = "supervisor=/etc/supervisord.d/policyd.ini"
         config_files.append(path)
 
+        # Add worker for dkim if needed
         # Add RQ workers if needed
         if self.modoboa_2_2_or_greater:
-            config_files.append(
-                "supervisor-rq-dkim=/etc/supervisor/conf.d/modoboa-dkim-worker.conf")
-            config_files.append(
-                "supervisor-rq-base=/etc/supervisor/conf.d/modoboa-base-worker.conf")
-            config_files.append(
-                "supervisor-rq-dovecot=/etc/supervisor/conf.d/modoboa-dovecot-worker.conf")
-            config_files.append(
-                "supervisor-rq-privileged=/etc/supervisor/conf.d/modoboa-privileged-worker.conf")
-            config_files.append(
-                "supervisor-rq-scheduler=/etc/supervisor/conf.d/rq-scheduler.conf")
+            if package.backend.FORMAT == "pkg":
+                utils.exec_cmd("mkdir -p /usr/local/etc/supervisor/conf.d")
+                config_files.append(
+                   "supervisor-rq-dkim=/usr/local/etc/supervisor/conf.d/modoboa-dkim-worker.conf")
+                config_files.append(
+                   "supervisord.conf=/usr/local/etc/supervisord.conf")
+                config_files.append(
+                   "supervisor-rq-base=/usr/local/etc/supervisor/conf.d/modoboa-base-worker.conf")
+                config_files.append(
+                    "supervisor-rq-dovecot=/usr/local/etc/supervisor/conf.d/modoboa-dovecot-worker.conf")
+                config_files.append(
+                    "supervisor-rq-privileged=/usr/local/etc/supervisor/conf.d/modoboa-privileged-worker.conf")
+                config_files.append(
+                    "supervisor-rq-scheduler=/usr/local/etc/supervisor/conf.d/rq-scheduler.conf")
+            else:
+                config_files.append(
+                   "supervisor-rq-dkim=/etc/supervisor/conf.d/modoboa-dkim-worker.conf")
+                config_files.append(
+                   "supervisor-rq-base=/etc/supervisor/conf.d/modoboa-base-worker.conf")
+                config_files.append(
+                    "supervisor-rq-dovecot=/etc/supervisor/conf.d/modoboa-dovecot-worker.conf")
+                config_files.append(
+                    "supervisor-rq-privileged=/etc/supervisor/conf.d/modoboa-privileged-worker.conf")
+                config_files.append(
+                    "supervisor-rq-scheduler=/etc/supervisor/conf.d/rq-scheduler.conf")
+
         return config_files
 
     def get_template_context(self):
@@ -246,7 +278,8 @@ class Modoboa(base.Installer):
             "dovecot_mailboxes_owner": (
                 self.config.get("dovecot", "mailboxes_owner")),
             "opendkim_user": self.config.get("opendkim", "user"),
-            "dkim_user": "_rspamd" if self.rspamd_enabled else self.config.get("opendkim", "user"),
+            "dkim_user": "_rspamd" if self.rspamd_enabled else
+            self.config.get("opendkim", "user"),
             "minutes": random.randint(1, 59),
             "hours": f"{random_hour},{random_hour+12}",
             "modoboa_2_2_or_greater": "" if self.modoboa_2_2_or_greater else "#",
@@ -312,6 +345,10 @@ class Modoboa(base.Installer):
         """Additional tasks."""
         if 'centos' in utils.dist_name():
             system.enable_and_start_service("redis")
+        elif 'freebsd' in utils.dist_name():
+            # no default redis.conf
+            utils.exec_cmd("cp /usr/local/etc/redis.conf.sample /usr/local/etc/redis.conf")
+            system.enable_and_start_service("redis")
         else:
             system.enable_and_start_service("redis-server")
         self._deploy_instance()
@@ -319,6 +356,8 @@ class Modoboa(base.Installer):
             self.apply_settings()
 
         if 'centos' in utils.dist_name():
+            supervisor = "supervisord"
+        elif  'freebsd' in utils.dist_name():
             supervisor = "supervisord"
         else:
             supervisor = "supervisor"

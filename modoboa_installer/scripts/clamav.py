@@ -8,7 +8,6 @@ from . import base
 
 
 class Clamav(base.Installer):
-
     """ClamAV installer."""
 
     appname = "clamav"
@@ -17,12 +16,15 @@ class Clamav(base.Installer):
         "rpm": [
             "clamav", "clamav-update", "clamav-server", "clamav-server-systemd"
         ],
+        "pkg": ["clamav-lts"],
     }
 
     def get_daemon_name(self):
         """Return appropriate daemon name."""
         if package.backend.FORMAT == "rpm":
             return "clamd@amavisd"
+        if package.backend.FORMAT == "pkg":
+            return "clamav_clamd"
         return "clamav-daemon"
 
     @property
@@ -30,6 +32,9 @@ class Clamav(base.Installer):
         """Return appropriate config dir."""
         if package.backend.FORMAT == "rpm":
             return "/etc"
+        if package.backend.FORMAT == "pkg":
+            return "/usr/local/etc"
+
         return ""
 
     def get_config_files(self):
@@ -51,11 +56,18 @@ class Clamav(base.Installer):
                 "AllowSupplementaryGroups true/")
             utils.exec_cmd(
                 "perl -pi -e '{}' /etc/clamav/clamd.conf".format(pattern))
+        # @TODO@
+        if package.backend.FORMAT == "pkg":
+            user = "clamav"
+            utils.exec_cmd(
+                "perl -pi -e 's/^Example/#Example/' /usr/local/etc/freshclam.conf")
+            system.enable_and_start_service("clamav_clamd")
+
         else:
             user = "clamupdate"
             utils.exec_cmd(
                 "perl -pi -e 's/^Example/#Example/' /etc/freshclam.conf")
-            # Check if not present before
+            # Check if not present before 
             path = "/usr/lib/systemd/system/clamd@.service"
             code, output = utils.exec_cmd(
                 r"grep 'WantedBy\s*=\s*multi-user.target' {}".format(path))
@@ -67,11 +79,12 @@ class Clamav(base.Installer):
 WantedBy=multi-user.target
 EOM
 """.format(path))
-
+        # @TODO@
         if utils.dist_name() in ["debian", "ubuntu"]:
             # Stop freshclam daemon to allow manual download
             utils.exec_cmd("service clamav-freshclam stop")
             utils.exec_cmd("freshclam", sudo_user=user, login=False)
             utils.exec_cmd("service clamav-freshclam start")
+        
         else:
             utils.exec_cmd("freshclam", sudo_user=user, login=False)

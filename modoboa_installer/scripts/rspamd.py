@@ -20,6 +20,8 @@ class Rspamd(base.Installer):
         "deb": [
             "rspamd", "redis"
         ]
+        "pkg": ["rspamd"
+        ]
     }
     config_files = [
         "local.d/arc.conf",
@@ -47,7 +49,10 @@ class Rspamd(base.Installer):
     @property
     def config_dir(self):
         """Return appropriate config dir."""
-        return "/etc/rspamd"
+        if package.backend.FORMAT == "pkg":
+            return "/usr/local/etc/rspamd"
+        else:
+            return "/etc/rspamd"
 
     def install_packages(self):
         debian_based_dist, codename = utils.is_dist_debian_based()
@@ -101,8 +106,10 @@ class Rspamd(base.Installer):
 
     def get_template_context(self):
         _context = super().get_template_context()
-        _context["greylisting_disabled"] = "" if not self.app_config["greylisting"].lower() == "true" else "#"
-        _context["whitelist_auth_enabled"] = "" if self.app_config["whitelist_auth"].lower() == "true" else "#"
+        _context["greylisting_disabled"] = "" if not self.app_config\
+            ["greylisting"].lower() == "true" else "#"
+        _context["whitelist_auth_enabled"] = "" if self.app_config\
+            ["whitelist_auth"].lower() == "true" else "#"
         if self.generate_password_condition:
             code, controller_password = utils.exec_cmd(
                 r"rspamadm pw -p {}".format(self.app_config["password"]))

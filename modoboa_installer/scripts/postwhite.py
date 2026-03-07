@@ -4,7 +4,7 @@ import os
 import shutil
 
 from .. import utils
-
+from .. import package
 from . import base
 
 POSTWHITE_REPOSITORY = "https://github.com/stevejenkins/postwhite"
@@ -21,7 +21,8 @@ class Postwhite(base.Installer):
     no_daemon = True
     packages = {
         "deb": ["bind9-host", "unzip"],
-        "rpm": ["bind-utils", "unzip"]
+        "rpm": ["bind-utils", "unzip"],
+        "pkg": ["bind-tools", "unzip"]
     }
 
     def install_from_archive(self, repository, target_dir):
@@ -50,11 +51,19 @@ class Postwhite(base.Installer):
         utils.copy_file(
             os.path.join(self.postw_dir, "postwhite.conf"), self.config_dir)
         self.postw_bin = os.path.join(self.postw_dir, "postwhite")
-        utils.exec_cmd("{} /etc/postwhite.conf".format(self.postw_bin))
+        if package.backend.FORMAT == "pkg":
+            # patch paths to suit FreeBSD
+            utils.exec_cmd("sed -i .bak 's@/etc/postfix@/usr/local/etc/postfix@g' /usr/local/etc/postwhite.conf")
+            utils.exec_cmd("sed -i .bak 's@/usr/sbin@/usr/local/bin@g' /usr/local/etc/postwhite.conf")
+            utils.exec_cmd("{} /usr/local/etc/postwhite.conf".format(self.postw_bin))
+        else:
+            utils.exec_cmd("{} /etc/postwhite.conf".format(self.postw_bin))
 
     def custom_backup(self, path):
         """Backup custom configuration if any."""
         postswhite_custom = "/etc/postwhite.conf"
+        if package.backend.FORMAT == "pkg":
+            postswhite_custom = "/usr/local/etc/postwhite.conf"
         if os.path.isfile(postswhite_custom):
             utils.copy_file(postswhite_custom, path)
             utils.printcolor(

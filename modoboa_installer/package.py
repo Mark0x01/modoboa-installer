@@ -135,6 +135,56 @@ class RPMPackage(Package):
             return match.group(1)
         return None
 
+class PKGPackage(Package):
+    """PKG based operations."""
+    FORMAT = "pkg"
+
+    def __init__(self, dist_name):
+        super(PKGPackage, self).__init__(dist_name)
+        self.index_updated = False    
+
+    def install(self, name):
+        """Install a package."""
+        utils.printcolor("utils.ENV = {}".format(utils.ENV),utils.RED)
+        if utils.ENV.get("debug"):
+            utils.printcolor(
+                    "pkg install {}".format(target),utils.YELLOW)
+        utils.exec_cmd("pkg install -yqU {}".format(name))
+
+    def install_many(self, names):
+        """Install many packages."""
+        if utils.ENV.get("debug"):
+            utils.printcolor(
+                    "pkg install many {}".format(" ".join(names)),utils.YELLOW)
+        return utils.exec_cmd("pkg install -yqU {}".format(" ".join(names)))
+        
+    def update(self):
+        """Update local cache."""
+        if self.index_updated:
+            return
+        utils.exec_cmd("pkg update -q")
+        self.index_updated = True  
+
+    def get_installed_version(self, name):
+        code, output = utils.exec_cmd(
+            "pkg query %v {}".format(name), capture_output=True)
+        if not code:
+             return output.decode()
+        else:        
+             return None
+
+    def check_package_name(name):
+        code, output = utils.exec_cmd(
+            "pkg search -Q name {}".format(name, capture_output=True))
+        return code        
+
+    def package_is_installed(name):
+        code = utils.exec_cmd(
+            "pkg info -e name {}".format(name, capture_output=False))
+        return code    
+
+
+
 
 def get_backend():
     """Return the appropriate package backend."""
@@ -144,6 +194,8 @@ def get_backend():
         backend = DEBPackage
     elif "centos" in distname:
         backend = RPMPackage
+    elif "freebsd"  in distname: 
+        backend = PKGPackage
     else:
         raise NotImplementedError(
             "Sorry, this distribution is not supported yet.")

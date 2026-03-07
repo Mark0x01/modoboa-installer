@@ -1,3 +1,4 @@
+
 """Postfix related tools."""
 
 try:
@@ -15,16 +16,21 @@ from . import backup, install
 
 class Postfix(base.Installer):
     """Postfix installer."""
-
+    """for FreeBSD, postfix pkg with db support will be postfix-{db_driver}, and is installed below."""
     appname = "postfix"
     packages = {
         "deb": ["postfix", "postfix-pcre"],
+        "pkg": ["maildrop"],
     }
+
+    #if package.backend.FORMAT == "pkg":
+    #     config_files = ["main.cf.freebsd", "master.cf.freebsd", "anonymize_headers.pcre"]
+    #else:
     config_files = ["main.cf", "master.cf", "anonymize_headers.pcre"]
 
     def get_packages(self):
         """Additional packages."""
-        if package.backend.FORMAT == "deb":
+        if package.backend.FORMAT == "deb" or package.backend.FORMAT == "pkg":
             packages = ["postfix-{}".format(self.db_driver)]
         else:
             packages = []
@@ -61,7 +67,7 @@ class Postfix(base.Installer):
             "opendkim_port": self.config.get(
                 "opendkim", "port"),
             "rspamd_disabled": "" if not self.config.getboolean(
-                "rspamd", "enabled") else "#"
+                "rspamd", "enabled") else "#",      
         })
         return context
 
@@ -98,9 +104,10 @@ class Postfix(base.Installer):
 
         # Generate /etc/aliases.db file to avoid warnings
         aliases_file = "/etc/aliases"
+        if package.backend.FORMAT == "pkg":
+            aliases_file = "/usr/local/etc/postfix/aliases"
         if os.path.exists(aliases_file):
             utils.exec_cmd("postalias {}".format(aliases_file))
-
         # Postwhite
         condition = (
             not self.config.getboolean("rspamd", "enabled") and

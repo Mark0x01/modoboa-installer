@@ -93,7 +93,10 @@ def dist_name():
     """Try to guess the distribution name."""
     return dist_info()[0].lower()
 
-
+def get_python_version():
+      pyversion = "{}{}".format(str(sys.version_info[0]),str(sys.version_info[1]))
+      return pyversion
+      
 def is_dist_debian_based() -> (bool, str):
     """Check if current OS is Debian based or not."""
     status, codename = exec_cmd("lsb_release -c -s")
@@ -172,9 +175,11 @@ def copy_from_template(template, dest, context):
         buf = fp.read()
     if os.path.isfile(dest):
         backup_file(dest)
+    if ENV.get("debug"):
+        printcolor("utils.py:copy_from_template:{} {} context:{}".format(template,dest,context),MAGENTA)
     with open(dest, "w") as fp:
         fp.write(
-            "# This file was automatically installed on {}\n"
+            "# This file was automatically installed by modoboa-installer on {}\n"
             .format(now))
         fp.write(ConfigFileTemplate(buf).substitute(context))
 
@@ -448,7 +453,6 @@ def update_config(path, apply_update=True):
     else:
         # Simply check if current config file is outdated
         return update
-
 
 def gen_config(dest, interactive=False):
     """Create config file from dict template"""

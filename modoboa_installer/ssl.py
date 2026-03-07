@@ -65,8 +65,14 @@ class SelfSignedCertificate(CertificateBackend):
         if self.config.has_option("general", "tls_key_file"):
             # Compatibility
             return
-        for base_dir in ["/etc/pki/tls", "/etc/ssl"]:
+        # order is important, as in freebsd two exist.
+        for base_dir in ["/etc/pki/tls", "/usr/local/etc/ssl", "/etc/ssl"]:
             if os.path.exists(base_dir):
+                name, version = utils.dist_info()
+                name = name.lower()
+                if "freebsd" in name:
+                     utils.exec_cmd("mkdir -p  /usr/local/etc/ssl/private")
+                     utils.exec_cmd("mkdir -p  /usr/local/etc/ssl/certs")
                 self.config.set(
                     "general", "tls_key_file",
                     "{}/private/%(hostname)s.key".format(base_dir))
@@ -98,10 +104,16 @@ class LetsEncryptCertificate(CertificateBackend):
         """Update config."""
         super().__init__(*args, **kwargs)
         self.hostname = self.config.get("general", "hostname")
-        self.config.set("general", "tls_cert_file", (
-            "/etc/letsencrypt/live/{}/fullchain.pem".format(self.hostname)))
-        self.config.set("general", "tls_key_file", (
-            "/etc/letsencrypt/live/{}/privkey.pem".format(self.hostname)))
+        if "freebsd" in name:
+            self.config.set("general", "tls_cert_file", (
+                "/usr/local/etc/letsencrypt/live/{}/fullchain.pem".format(self.hostname)))
+            self.config.set("general", "tls_key_file", (
+                "/usr/local/etc/letsencrypt/live/{}/privkey.pem".format(self.hostname)))
+        else:
+          self.config.set("general", "tls_cert_file", (
+              "/etc/letsencrypt/live/{}/fullchain.pem".format(self.hostname)))
+          self.config.set("general", "tls_key_file", (
+              "/etc/letsencrypt/live/{}/privkey.pem".format(self.hostname)))
 
     def install_certbot(self):
         """Install certbot script to generate cert."""
@@ -120,6 +132,10 @@ class LetsEncryptCertificate(CertificateBackend):
             package.backend.install("certbot")
         elif "centos" in name:
             package.backend.install("certbot")
+        elif "freebsd" in name:
+            package.backend.install_many["py311-certbot-nginx", "py311-certbot-apache", "py311-salt", "py311-acme"]
+            #create paths as none exist, certs under etc/ssl, config under etc/letsencrypt
+            utils.exec_cmd("mkdir -p  /usr/local/etc/ssl/private /usr/local/etc/ssl/letsencrypt/live /usr/local/etc/letsencrypt/renewal")
         else:
             utils.printcolor("Failed to install certbot, aborting.")
             sys.exit(1)
@@ -140,13 +156,25 @@ class LetsEncryptCertificate(CertificateBackend):
             "certbot certonly -n --standalone -d {} -m {} --agree-tos"
             .format(
                 self.hostname, self.config.get("letsencrypt", "email")))
-        with open("/etc/cron.d/letsencrypt", "w") as fp:
+        if "freebsd" in name:
+             cronpath = "/usr/local/etc/cron.d"
+        else:
+             cronpath = '/etc/cron.d/'
+             cronpath += 'letsencrypt'
+        with open(cronpath, "w") as fp:
             fp.write("0 */12 * * * root certbot renew "
                      "--quiet\n")
-        cfg_file = "/etc/letsencrypt/renewal/{}.conf".format(self.hostname)
+        if "freebsd" in name:
+             cfg_file = '/usr/local'
+
+        cfg_file += "/etc/letsencrypt/renewal/{}.conf".format(self.hostname)
         pattern = "s/authenticator = standalone/authenticator = nginx/"
         utils.exec_cmd("perl -pi -e '{}' {}".format(pattern, cfg_file))
-        with open("/etc/letsencrypt/renewal-hooks/deploy/reload-services.sh", "w") as fp:
+        if "freebsd" in name:
+            renew_file = '/usr/local'
+        renew_file += "/etc/letsencrypt/renewal-hooks/deploy/reload-services.sh"
+
+        with open(renew_file, "w") as fp:
             fp.write(f"""#!/bin/bash
 
 HOSTNAME=$(basename $RENEWED_LINEAGE)

@@ -1,3 +1,4 @@
+
 """Database related tools."""
 
 import os
@@ -29,10 +30,16 @@ class Database:
         if self.config.getboolean("database", "install"):
             self.install_package()
 
-    def install_package(self):
-        """Install database package if required."""
-        package.backend.install_many(self.packages[package.backend.FORMAT])
-        system.enable_and_start_service(self.service)
+#    def install_package(self):
+#        """Install database package if required."""
+#        if utils.dist_name()  == "freebsd":
+#            if package_is_installed() == 1:
+#                package.backend.install_many(self.packages[package.backend.FORMAT])
+#                system.enable_and_start_service(self.service)
+#        else:
+#            
+#            package.backend.install_many(self.packages[package.backend.FORMAT])
+#            system.enable_and_start_service(self.service)
 
 
 class PostgreSQL(Database):
@@ -41,16 +48,18 @@ class PostgreSQL(Database):
     default_port = 5432
     packages = {
         "deb": ["postgresql", "postgresql-server-dev-all"],
-        "rpm": ["postgresql-server", "postgresql-devel"]
+        "rpm": ["postgresql-server", "postgresql-devel"],
+        "pkg": ["postgresql17-server", "postgresql17-client"]
     }
     service = "postgresql"
 
     def __init__(self, config):
         super().__init__(config)
         self._pgpass_done = False
-
+        
     def install_package(self):
         """Install database if required."""
+        #utils.printcolor("database.py:install_package",utils.GREEN)
         name, version = utils.dist_info()
         if "CentOS" in name:
             if version.startswith("7"):
@@ -71,10 +80,26 @@ class PostgreSQL(Database):
             utils.exec_cmd(initdb_cmd)
             pattern = "s/^host(.+)ident$/host$1md5/"
             utils.exec_cmd("perl -pi -e '{}' {}".format(pattern, cfgfile))
-        else:
-            package.backend.install_many(self.packages[package.backend.FORMAT])
-        system.enable_and_start_service(self.service)
 
+        
+        if utils.dist_name()  == "freebsd":
+            #Check if is installed (0=yes)
+            code = utils.exec_cmd(
+                "pkg info -e {}".format(self.packages[package.backend.FORMAT][0], capture_output=False))
+            if code[0] == 1:
+                 if utils.ENV.get("debug"):
+                     utils.printcolor("database.py:installing postgresql",utils.GREEN)
+                 package.backend.install_many(self.packages[package.backend.FORMAT])
+                 system.enable_and_start_service(self.service)
+                 utils.exec_cmd("service postgresql initdb -A md5")
+            else:
+                if utils.ENV.get("debug"):
+                    utils.printcolor("database.py:postgresql already installed",utils.GREEN)
+        else:    
+            package.backend.install_many(self.packages[package.backend.FORMAT])
+           
+        system.enable_and_start_service(self.service)
+        
     def _exec_query(self, query, dbname=None, dbuser=None, dbpassword=None):
         """Exec a postgresql query."""
         cmd = "psql"

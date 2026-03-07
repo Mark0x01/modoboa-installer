@@ -16,7 +16,8 @@ class Nginx(base.Installer):
     appname = "nginx"
     packages = {
         "deb": ["nginx", "ssl-cert"],
-        "rpm": ["nginx"]
+        "rpm": ["nginx"],
+        "pkg": ["nginx", "pcre2", "gsed"]
     }
 
     def get_template_context(self):
@@ -51,6 +52,15 @@ class Nginx(base.Installer):
             if self.config.has_section(app):
                 group = self.config.get(app, "user")
             user = "www-data"
+        elif package.backend.FORMAT == "pkg":
+            #conf.d is not standard in FreeBSD
+            """no conf.d by default for freebsd 13"""
+            utils.exec_cmd("mkdir -p  /usr/local/etc/nginx/conf.d")
+            dst = os.path.join(
+                self.config_dir, "conf.d", "{}.conf".format(hostname))
+            utils.copy_from_template(src, dst, context)
+            group = "uwsgi"
+            user = "www"
         else:
             dst = os.path.join(
                 self.config_dir, "conf.d", "{}.conf".format(hostname))
@@ -79,7 +89,18 @@ class Nginx(base.Installer):
 """
         self._setup_config(
             "modoboa", extra_config=extra_modoboa_config)
+        if package.backend.FORMAT == "pkg":
+             # need to use gsed at this time.
+             # this appears to be run twice, so check first
+             # fix with sed -n '/pattern/!p;$a pattern'
 
+            path = "/usr/local/etc/nginx/nginx.conf"
+            code, output = utils.exec_cmd(
+                r"grep 'include /usr/local/etc/nginx/conf.d' {}".format(path))
+            if code:
+                utils.exec_cmd(
+                    "gsed -i.bak '122i\include /usr/local/etc/nginx/conf.d/*.conf;' /usr/local/etc/nginx/nginx.conf" 
+                    )
         if not os.path.exists("{}/dhparam.pem".format(self.config_dir)):
             cmd = "openssl dhparam -dsaparam -out dhparam.pem 4096"
             utils.exec_cmd(cmd, cwd=self.config_dir)

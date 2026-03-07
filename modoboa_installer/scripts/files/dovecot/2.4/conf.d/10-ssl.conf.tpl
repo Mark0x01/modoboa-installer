@@ -18,7 +18,7 @@ ssl = yes
 # ssl_server_cert_file = /etc/dovecot/private/dovecot.pem
 # Preferred permissions: root:root 0400
 # ssl_server_key_file = /etc/dovecot/private/dovecot.key
-!include_try /etc/dovecot/conf.d/10-ssl-keys.try
+!include_try    %{etc_prefix}/dovecot/conf.d/10-ssl-keys.try
 
 # If key file is password protected, give the password here. Alternatively
 # give it when starting dovecot with -p parameter. Since this file is often

@@ -5,19 +5,12 @@
 
 An installer which deploys a complete mail server based on Modoboa.
 
-With added support for use with FreeBSD.
-NOTE: Due to pkg build differences between Linux and FreeBSD, a number of packages will require building from ports.
-
-Current testing on FreeBSD 13.5 and Postgres 17
-see README.FreeBSD
-
 .. warning::
 
    This tool is still in beta, it has been tested on:
 
    * Debian 12 and upper
    * Ubuntu Focal Fossa (20.04) and upper
-   * experimental: FreeBSD 13.5   see README.FreeBSD
 
 .. warning::
 

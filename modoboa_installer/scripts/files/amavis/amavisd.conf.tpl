@@ -14,12 +14,12 @@ use strict;
 # $bypass_decode_parts = 1;         # controls running of decoders&dearchivers
 
 $max_servers = %max_servers; # num of pre-forked children (2..30 is common), -m
-$daemon_user  = 'amavis';    # (no default;  customary: vscan or amavis), -u
-$daemon_group = 'amavis';    # (no default;  customary: vscan or amavis), -g
+$daemon_user  = '%user';    # (no default;  customary: vscan or amavis), -u
+$daemon_group = '%group';    # (no default;  customary: vscan or amavis), -g
 
 $mydomain = '%hostname';   # a convenient default for other settings
 
-$MYHOME = '/var/spool/amavisd';   # a convenient default for other settings, -H
+$MYHOME = '%my_home';   # a convenient default for other settings, -H
 $TEMPBASE = "$MYHOME/tmp";   # working directory, needs to exist, -T
 $ENV{TMPDIR} = $TEMPBASE;    # environment variable TMPDIR, used by SA, etc.
 $QUARANTINEDIR = undef;      # -Q
@@ -31,8 +31,8 @@ $QUARANTINEDIR = undef;      # -Q
 
 $db_home   = "$MYHOME/db";        # dir for bdb nanny/cache/snmp databases, -D
 # $helpers_home = "$MYHOME/var";  # working directory for SpamAssassin, -S
-$lock_file = "/var/run/amavisd/amavisd.lock";  # -L
-$pid_file  = "/var/run/amavisd/amavisd.pid";   # -P
+$lock_file = "%lockfile";  # -L
+$pid_file  = "%pidfile";   # -P
 #NOTE: create directories $MYHOME/tmp, $MYHOME/var, $MYHOME/db manually
 
 $log_level = 0;              # verbosity 0..5, -d
@@ -52,7 +52,7 @@ $enable_dkim_signing = 1;    # load DKIM signing code, keys defined by dkim_key
 @mynetworks = qw( 127.0.0.0/8 [::1] [FE80::]/10 [FEC0::]/10
                   10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 );
 
-$unix_socketname = "/var/run/amavisd/amavisd.sock";  # amavisd-release or amavis-milter
+$unix_socketname = "%{usocket}";  # amavisd-release or amavis-milter
                # option(s) -p overrides $inet_socket_port and $unix_socketname
 
 # $inet_socket_port = 10024;   # listen on this local TCP port(s)
@@ -494,7 +494,7 @@ $banned_filename_re = new_RE(
     #   directory $TEMPBASE specifies) in the 'Names=' section.
     # cd /opt/AVP/DaemonClients; configure; cd Sample; make
     # cp AvpDaemonClient /opt/AVP/
-    # su - vscan -c "${PREFIX}/kavdaemon ${DPARMS}"
+    # su - vscan -c "/etc/kavdaemon ${DPARMS}"
 
   ### http://www.centralcommand.com/
   ['CentralCommand Vexira (new) vascan',
@@ -780,7 +780,7 @@ $banned_filename_re = new_RE(
     qr/(?:Infection:|security risk named) (.+)|\s+contains\s+(.+)$/m ],
 
   ### http://www.trendmicro.com/   - backs up Trophie
-  ['Trend Micro FileScanner', ['/etc/iscan/vscan','vscan'],
+  ['Trend Micro FileScanner', ['%{etc_prefix}/iscan/vscan','vscan'],
     '-za -a {}', [0], qr/Found virus/m, qr/Found virus (.+) in/m ],
 
   ### http://www.sald.com/, http://drweb.imshop.de/   - backs up DrWebD

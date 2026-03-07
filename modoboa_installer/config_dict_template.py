@@ -28,10 +28,23 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "hostname",
-                "default": "mail.%(domain)s",
+                "default": "mail.%(domain)s"
             }
         ]
     },
+
+    {
+         "name": "os",
+         "values": [
+            {   "option": "etc_prefix",
+                "default": "/etc"
+            },
+            {   "option": "bin_prefix",
+                "default": "/usr/bin"
+            }
+         ]
+    },
+           
     {
         "name": "antispam",
         "values": [
@@ -61,7 +74,7 @@ ConfigDictTemplate = [
                 "customizable": True,
                 "question": "Please choose your certificate type",
                 "values": ["self-signed", "letsencrypt", "manual"],
-                "non_interactive_values": ["manual"],
+                "non_interactive_values": ["manual"]
             },
             {
                 "option": "tls_cert_file_path",
@@ -96,7 +109,7 @@ ConfigDictTemplate = [
                 "default": "postgres",
                 "customizable": True,
                 "question": "Please choose your database engine",
-                "values": ["postgres", "mysql"],
+                "values": ["postgres", "mysql"]
             },
             {
                 "option": "host",
@@ -104,7 +117,7 @@ ConfigDictTemplate = [
             },
             {
                 "option": "install",
-                "default": "true",
+                "default": "true"
             }
         ]
     },
@@ -114,14 +127,18 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "user",
-                "default": "postgres",
+                "default": "postgres"
             },
             {
                 "option": "password",
                 "default": "",
                 "customizable": True,
-                "question": "Please enter postgres password",
+                "question": "Please enter postgres password"
             },
+            {
+                "option": "collation",
+                "default": "utf8"
+            }
         ]
     },
     {
@@ -130,7 +147,7 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "user",
-                "default": "root",
+                "default": "root"
             },
             {
                 "option": "password",
@@ -140,11 +157,11 @@ ConfigDictTemplate = [
             },
             {
                 "option": "charset",
-                "default": "utf8",
+                "default": "utf8"
             },
             {
                 "option": "collation",
-                "default": "utf8_general_ci",
+                "default": "utf8_general_ci"
             }
         ]
     },
@@ -153,7 +170,7 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "config_dir",
@@ -178,37 +195,42 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "user",
-                "default": "modoboa",
+                "default": "modoboa"
             },
             {
                 "option": "home_dir",
                 "default": "/srv/modoboa",
+                "customizable": True,
+                "question": "Please choose your modoboa home dir",
+                "values": ["/srv/modoboa", "/usr/local/www/modoboa"]
             },
             {
                 "option": "venv_path",
-                "default": "%(home_dir)s/env",
+                "default": "%(home_dir)s/env"
             },
             {
                 "option": "instance_path",
-                "default": "%(home_dir)s/instance",
+                "default": "%(home_dir)s/instance"
             },
             {
                 "option": "timezone",
                 "default": "Europe/Paris",
+                "customizable": True,
+                "question": "Please enter time zone"
             },
             {
                 "option": "dbname",
-                "default": "modoboa",
+                "default": "modoboa"
             },
             {
                 "option": "dbuser",
-                "default": "modoboa",
+                "default": "modoboa"
             },
             {
                 "option": "dbpassword",
                 "default": make_password,
                 "customizable": True,
-                "question": "Please enter Modoboa db password",
+                "question": "Please enter Modoboa db password"
             },
             {
                 "option": "cron_error_recipient",
@@ -223,7 +245,7 @@ ConfigDictTemplate = [
             },
             {
                 "option": "devmode",
-                "default": "false",
+                "default": "false"
             },
         ]
     },
@@ -233,33 +255,40 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": ["antispam.enabled=true", "antispam.type=rspamd"],
+                "default": ["antispam.enabled=true", "antispam.type=rspamd"]
             },
             {
                 "option": "user",
-                "default": "_rspamd",
+                "default": "_rspamd"
             },
             {
                 "option": "password",
                 "default": make_password,
                 "customizable": True,
-                "question": "Please enter Rspamd interface password",
+                "question": "Please enter Rspamd interface password"
             },
             {
                 "option": "dnsbl",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "dkim_keys_storage_dir",
-                "default": "/var/lib/dkim"
+                "default": "/var/lib/dkim",
+                "customizable": True,
+                "question": "Please choose your dkim key storage dir"
+
             },
             {
                 "option": "key_map_path",
-                "default": "/var/lib/dkim/keys.path.map"
+                "default": "/var/lib/dkim/keys.path.map",
+                "customizable": True,
+                "question": "Please choose your dkim key map"           
             },
             {
                 "option": "selector_map_path",
-                "default": "/var/lib/dkim/selectors.path.map"
+                "default": "/var/lib/dkim/selectors.path.map",
+                "customizable": True,
+                "question": "Please choose your dkim selector map"
             },
             {
                 "option": "greylisting",
@@ -280,41 +309,65 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": ["antispam.enabled=true", "antispam.type=amavis"],
+                "default": ["antispam.enabled=true", "antispam.type=amavis"]
             },
             {
                 "option": "user",
-                "default": "amavis",
+                "default": "amavis"
             },
             {
+                "option": "group",
+                "default": "amavis"
+            },
+            {
+                "option": "config_dir",
+                "default": "/etc/amavis"
+            },            
+            {
                 "option": "max_servers",
-                "default": "2",
+                "default": "2"
             },
             {
                 "option": "dbname",
-                "default": "amavis",
+                "default": "amavis"
             },
             {
                 "option": "dbuser",
-                "default": "amavis",
+                "default": "amavis"
             },
             {
                 "option": "dbpassword",
-                "default": make_password,
+                "default": make_password
             },
-        ],
+            {
+                "option": "my_home",
+                "default": "/var/spool/amavisd"
+            },
+            {
+                "option": "lockfile",
+                "default": "/var/run/amavisd/amavisd.lock"
+            },
+            {
+                "option": "pidfile",
+                "default": "/var/run/amavisd/amavisd.pid"
+            },
+            {
+                "option": "usocket",
+                "default": "/var/run/amavisd/amavisd.sock"
+            }                                    
+        ]
     },
     {
         "name": "clamav",
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "user",
-                "default": "clamav",
-            },
+                "default": "clamav"
+            }
         ]
     },
     {
@@ -322,15 +375,15 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/dovecot",
+                "default": "/etc/dovecot"
             },
             {
                 "option": "user",
-                "default": "dovecot",
+                "default": "dovecot"
             },
             {
                 "option": "home_dir",
@@ -338,28 +391,28 @@ ConfigDictTemplate = [
             },
             {
                 "option": "mailboxes_owner",
-                "default": "vmail",
+                "default": "vmail"
             },
             {
                 "option": "extra_protocols",
-                "default": "",
+                "default": ""
             },
             {
                 "option": "postmaster_address",
-                "default": "postmaster@%(domain)s",
+                "default": "postmaster@%(domain)s"
             },
             {
                 "option": "radicale_auth_socket_path",
-                "default": "/var/run/dovecot/auth-radicale",
+                "default": "/var/run/dovecot/auth-radicale"
             },
             {
                 "option": "move_spam_to_junk",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "oauth2_client_secret",
                 "default": make_client_secret
-            },
+            }
         ]
     },
     {
@@ -367,25 +420,29 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/nginx",
+                "default": "/etc/nginx"
             },
-        ],
+        ]
     },
     {
         "name": "razor",
         "values": [
             {
                 "option": "enabled",
-                "default": "false",
+                "default": "false"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/razor",
+                "default": "/etc/razor"
             },
+            {
+                "option": "pyzor_bin_path",
+                "default": "/usr/bin/pyzor"
+            }           
         ]
     },
     {
@@ -393,15 +450,15 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/postfix",
+                "default": "/etc/postfix"
             },
             {
                 "option": "message_size_limit",
-                "default": "11534336",
+                "default": "11534336"
             },
             {
                 "option": "dhe_group",
@@ -414,12 +471,12 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": ["antispam.enabled=true", "antispam.type=amavis"],
+                "default": ["antispam.enabled=true", "antispam.type=amavis"]
             },
             {
                 "option": "config_dir",
-                "default": "/etc",
-            },
+                "default": "/etc"
+            }
         ]
     },
     {
@@ -428,26 +485,30 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": ["antispam.enabled=true", "antispam.type=amavis"],
+                "default": ["antispam.enabled=true", "antispam.type=amavis"]
             },
             {
                 "option": "config_dir",
-                "default": "/etc/mail/spamassassin",
+                "default": "/etc/mail/spamassassin"
+            },
+            {
+                "option": "pyzor_bin_path",
+                "default": "/usr/bin/pyzor"
             },
             {
                 "option": "dbname",
-                "default": "spamassassin",
+                "default": "spamassassin"
             },
             {
                 "option": "dbuser",
-                "default": "spamassassin",
+                "default": "spamassassin"
             },
             {
                 "option": "dbpassword",
                 "default": make_password,
                 "customizable": True,
                 "question": "Please enter spamassassin db password"
-            },
+            }
         ]
     },
     {
@@ -455,16 +516,16 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/uwsgi",
+                "default": "/etc/uwsgi"
             },
             {
                 "option": "nb_processes",
-                "default": "4",
-            },
+                "default": "4"
+            }
         ]
     },
     {
@@ -472,28 +533,28 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": "true",
+                "default": "true"
             },
             {
                 "option": "user",
-                "default": "radicale",
+                "default": "radicale"
             },
             {
                 "option": "config_dir",
-                "default": "/etc/radicale",
+                "default": "/etc/radicale"
             },
             {
                 "option": "home_dir",
-                "default": "/srv/radicale",
+                "default": "/srv/radicale"
             },
             {
                 "option": "venv_path",
-                "default": "%(home_dir)s/env",
+                "default": "%(home_dir)s/env"
             },
             {
                 "option": "oauth2_client_secret",
                 "default": make_client_secret
-            },
+            }
         ]
     },
     {
@@ -502,15 +563,15 @@ ConfigDictTemplate = [
         "values": [
             {
                 "option": "enabled",
-                "default": ["antispam.enabled=true", "antispam.type=amavis"],
+                "default": ["antispam.enabled=true", "antispam.type=amavis"]
             },
             {
                 "option": "user",
-                "default": "opendkim",
+                "default": "opendkim"
             },
             {
                 "option": "config_dir",
-                "default": "/etc",
+                "default": "/etc"
             },
             {
                 "option": "port",
@@ -522,15 +583,14 @@ ConfigDictTemplate = [
             },
             {
                 "option": "dbuser",
-                "default": "opendkim",
+                "default": "opendkim"
             },
             {
                 "option": "dbpassword",
                 "default": make_password,
                 "customizable": True,
                 "question": "Please enter OpenDKIM db password"
-            },
-
+            }
         ]
     },
     {

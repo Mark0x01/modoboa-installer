@@ -18,12 +18,15 @@ class Uwsgi(base.Installer):
     packages = {
         "deb": ["uwsgi", "uwsgi-plugin-python3"],
         "rpm": ["uwsgi", "uwsgi-plugin-python36"],
+        "pkg": ["uwsgi-py311"]
     }
 
     def get_socket_path(self, app):
         """Return socket path."""
         if package.backend.FORMAT == "deb":
             return "/run/uwsgi/app/{}_instance/socket".format(app)
+        if package.backend.FORMAT == "pkg":
+            return "/tmp/{}_instance.sock".format(app)
         return "/run/uwsgi/{}_instance.sock".format(app)
 
     def get_template_context(self, app):
@@ -31,8 +34,11 @@ class Uwsgi(base.Installer):
         context = super(Uwsgi, self).get_template_context()
         if package.backend.FORMAT == "deb":
             uwsgi_plugin = "python3"
+        if package.backend.FORMAT == "pkg":
+            uwsgi_plugin = ""
         else:
             uwsgi_plugin = "python36"
+
         context.update({
             "app_user": self.config.get(app, "user"),
             "app_venv_path": self.config.get(app, "venv_path"),
@@ -41,12 +47,18 @@ class Uwsgi(base.Installer):
             "uwsgi_socket_path": self.get_socket_path(app),
             "uwsgi_plugin": uwsgi_plugin,
         })
+
         return context
 
     def get_config_dir(self):
         """Return appropriate configuration directory."""
         if package.backend.FORMAT == "deb":
             return os.path.join(self.config_dir, "apps-available")
+        if package.backend.FORMAT == "pkg":
+            """bug in pkg - default paths are missing"""
+            utils.exec_cmd("mkdir -p /usr/local/etc/uwsgi/vassals")
+            return "{}".format(self.config_dir)
+
         return "{}.d".format(self.config_dir)
 
     def _enable_config_debian(self, dst):
@@ -80,8 +92,19 @@ class Uwsgi(base.Installer):
                 self.config.get("modoboa", "home_dir")))
             pattern = (
                 "s/emperor-tyrant = true/emperor-tyrant = false/")
-            utils.exec_cmd(
-                "perl -pi -e '{}' /etc/uwsgi.ini".format(pattern))
+
+            #This needs improvement @TODO@
+            if package.backend.FORMAT == "pkg":
+                #disable plugins=python3
+                utils.exec_cmd(
+                    "perl -pi -e 's/plugins = /#plugins =/' /usr/local/etc/uwsgi/modoboa_instance.ini")
+                # set modoboa_instance.ini as default config file
+                dst = os.path.join(self.get_config_dir(), "modoboa_instance.ini")
+                utils.exec_cmd("sysrc uwsgi_configfile={}".format(dst))
+
+            else:
+                utils.exec_cmd(
+                   "perl -pi -e '{}' /etc/uwsgi.ini".format(pattern))
 
     def post_run(self):
         """Additionnal tasks."""
@@ -89,6 +112,8 @@ class Uwsgi(base.Installer):
 
     def restart_daemon(self):
         """Restart daemon process."""
+        if package.backend.FORMAT == "pkg":
+            system.enable_service("uwsgi")
         # Temp. fix for CentOS
         if utils.dist_name().startswith("centos"):
             pw = pwd.getpwnam("uwsgi")
@@ -101,4 +126,3 @@ class Uwsgi(base.Installer):
         code, output = utils.exec_cmd("service uwsgi status")
         action = "start" if code else "restart"
         utils.exec_cmd("service uwsgi {}".format(action))
-        system.enable_service(self.get_daemon_name())

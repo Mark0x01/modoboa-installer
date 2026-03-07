@@ -15,7 +15,7 @@ UMask			007
 # Sign for example.com with key in /etc/dkimkeys/dkim.key using
 # selector '2007' (e.g. 2007._domainkey.example.com)
 #Domain			example.com
-#KeyFile		/etc/dkimkeys/dkim.key
+#KeyFile		{etc_prefix}/dkimkeys/dkim.key
 #Selector		2007
 
 KeyTable		dsn:%{db_driver}://%{db_user}:%{db_password}@%{dbport}+%{dbhost}/%{db_name}/table=dkim?keycol=id?datacol=domain_name,selector,private_key_path
@@ -87,5 +87,5 @@ OversignHeaders		From
 #
 UserID                %{user}
 
-ExternalIgnoreList      /etc/opendkim.hosts
-InternalHosts           /etc/opendkim.hosts
+ExternalIgnoreList      {etc_prefix}/opendkim.hosts
+InternalHosts           {etc_prefix}/opendkim.hosts

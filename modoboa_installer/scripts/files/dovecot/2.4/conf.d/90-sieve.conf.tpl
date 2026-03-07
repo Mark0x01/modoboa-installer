@@ -24,7 +24,7 @@
 
 %{do_move_spam_to_junk}sieve_script after {
 %{do_move_spam_to_junk}  type = after
-%{do_move_spam_to_junk}  path = /etc/dovecot/conf.d/custom_after_sieve
+%{do_move_spam_to_junk}  path = %{etc_prefix}/dovecot/conf.d/custom_after_sieve
 %{do_move_spam_to_junk}}
 
 

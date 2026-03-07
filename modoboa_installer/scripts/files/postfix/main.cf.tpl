@@ -18,27 +18,27 @@ mailbox_size_limit = 0
 message_size_limit = %message_size_limit
 recipient_delimiter = +
 
-alias_maps = hash:/etc/aliases
-alias_database = hash:/etc/aliases
+alias_maps = hash:%{etc_prefix}/aliases
+alias_database = hash:%{etc_prefix}/aliases
 
 ## Proxy maps
 proxy_read_maps =
         proxy:unix:passwd.byname
-        proxy:%{db_driver}:/etc/postfix/sql-domains.cf
-        proxy:%{db_driver}:/etc/postfix/sql-domain-aliases.cf
-        proxy:%{db_driver}:/etc/postfix/sql-aliases.cf
-        proxy:%{db_driver}:/etc/postfix/sql-relaydomains.cf
-        proxy:%{db_driver}:/etc/postfix/sql-maintain.cf
-        proxy:%{db_driver}:/etc/postfix/sql-relay-recipient-verification.cf
-        proxy:%{db_driver}:/etc/postfix/sql-sender-login-map.cf
-        proxy:%{db_driver}:/etc/postfix/sql-spliteddomains-transport.cf
-        proxy:%{db_driver}:/etc/postfix/sql-transport.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-domains.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-domain-aliases.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-aliases.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-relaydomains.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-maintain.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-relay-recipient-verification.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-sender-login-map.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-spliteddomains-transport.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-transport.cf
 
 ## TLS settings
 #
 smtpd_use_tls = yes
 smtpd_tls_auth_only = no
-smtpd_tls_CApath = /etc/ssl/certs
+smtpd_tls_CApath = %{etc_prefix}/ssl/certs
 smtpd_tls_key_file = %tls_key_file
 smtpd_tls_cert_file = %tls_cert_file
 smtpd_tls_dh1024_param_file = ${config_directory}/ffdhe%{dhe_group}.pem
@@ -65,7 +65,7 @@ smtpd_data_restrictions = reject_unauth_pipelining
 smtpd_forbid_unauth_pipelining = yes
 
 # Use TLS if this is supported by the remote SMTP server, otherwise use plaintext.
-smtp_tls_CApath = /etc/ssl/certs
+smtp_tls_CApath = %{etc_prefix}/ssl/certs
 smtp_tls_security_level = may
 smtp_tls_loglevel = 1
 smtp_tls_exclude_ciphers = EXPORT, LOW
@@ -74,18 +74,18 @@ smtp_tls_exclude_ciphers = EXPORT, LOW
 #
 %{dovecot_enabled}virtual_transport = lmtp:unix:private/dovecot-lmtp
 
-%{dovecot_enabled}virtual_mailbox_domains = proxy:%{db_driver}:/etc/postfix/sql-domains.cf
-%{dovecot_enabled}virtual_alias_domains = proxy:%{db_driver}:/etc/postfix/sql-domain-aliases.cf
+%{dovecot_enabled}virtual_mailbox_domains = proxy:%{db_driver}:%{etc_prefix}/postfix/sql-domains.cf
+%{dovecot_enabled}virtual_alias_domains = proxy:%{db_driver}:%{etc_prefix}/postfix/sql-domain-aliases.cf
 %{dovecot_enabled}virtual_alias_maps =
-%{dovecot_enabled}        proxy:%{db_driver}:/etc/postfix/sql-aliases.cf
+%{dovecot_enabled}        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-aliases.cf
 
 ## Relay domains
 #
 relay_domains =
-        proxy:%{db_driver}:/etc/postfix/sql-relaydomains.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-relaydomains.cf
 transport_maps =
-	proxy:%{db_driver}:/etc/postfix/sql-transport.cf
-        proxy:%{db_driver}:/etc/postfix/sql-spliteddomains-transport.cf
+	proxy:%{db_driver}:%{etc_prefix}/postfix/sql-transport.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-spliteddomains-transport.cf
 
 ## SASL authentication through Dovecot
 #
@@ -130,7 +130,7 @@ strict_rfc821_envelopes = yes
 
 # List of authorized senders
 smtpd_sender_login_maps =
-        proxy:%{db_driver}:/etc/postfix/sql-sender-login-map.cf
+        proxy:%{db_driver}:%{etc_prefix}/postfix/sql-sender-login-map.cf
 
 # Add authenticated header to hide public client IP
 smtpd_sasl_authenticated_header = yes
@@ -141,8 +141,8 @@ smtpd_recipient_restrictions =
       permit_mynetworks
       permit_sasl_authenticated
       check_recipient_access
-          proxy:%{db_driver}:/etc/postfix/sql-maintain.cf
-          proxy:%{db_driver}:/etc/postfix/sql-relay-recipient-verification.cf
+          proxy:%{db_driver}:%{etc_prefix}/postfix/sql-maintain.cf
+          proxy:%{db_driver}:%{etc_prefix}/postfix/sql-relay-recipient-verification.cf
       reject_unverified_recipient
       reject_unauth_destination
       reject_non_fqdn_sender
@@ -153,7 +153,7 @@ smtpd_recipient_restrictions =
 #
 %{rspamd_disabled}postscreen_access_list =
 %{rspamd_disabled}       permit_mynetworks
-%{rspamd_disabled}      cidr:/etc/postfix/postscreen_spf_whitelist.cidr
+%{rspamd_disabled}      cidr:%{etc_prefix}/postfix/postscreen_spf_whitelist.cidr
 %{rspamd_disabled}postscreen_blacklist_action = enforce
 
 # Use some DNSBL

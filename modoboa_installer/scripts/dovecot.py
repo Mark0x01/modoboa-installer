@@ -26,6 +26,7 @@ class Dovecot(base.Installer):
             "dovecot-sieve",
         ],
         "rpm": ["dovecot", "dovecot-pigeonhole"],
+        "pkg": [""]
     }
     per_version_config_files = {
         "2.3": [
@@ -53,7 +54,10 @@ class Dovecot(base.Installer):
     @property
     def version(self) -> str:
         if not hasattr(self, "_version"):
-            self._version = package.backend.get_installed_version("dovecot-core")[:3]
+            if package.backend.FORMAT == "pkg":
+                self._version = package.backend.get_installed_version("dovecot-pgsql")[:3]
+            else:
+                self._version = package.backend.get_installed_version("dovecot-core")[:3]
         return self._version
 
     def setup_user(self):
@@ -104,6 +108,9 @@ class Dovecot(base.Installer):
         if package.backend.FORMAT == "deb":
             if "pop3" in self.config.get("dovecot", "extra_protocols"):
                 packages += ["dovecot-pop3d"]
+        if package.backend.FORMAT == "pkg":
+            utils.exec_cmd("mkdir -p  /usr/local/etc/dovecot/conf.d")
+            packages += ["dovecot-pigeonhole-{}".format(self.db_driver)]
         packages += super().get_packages()
         backports_codename = getattr(self, "backports_codename", None)
         if backports_codename:
@@ -128,7 +135,7 @@ class Dovecot(base.Installer):
         """Additional variables."""
         context = super().get_template_context()
         pw_mailbox = pwd.getpwnam(self.mailboxes_owner)
-        dovecot_package = {"deb": "dovecot-core", "rpm": "dovecot"}
+        dovecot_package = {"deb": "dovecot-core", "rpm": "dovecot", "pkg": f"dovecot-{self.db_driver}"}
         ssl_protocol_parameter = "ssl_protocols"
         if (
             package.backend.get_installed_version(
@@ -187,6 +194,7 @@ class Dovecot(base.Installer):
                 ),
                 "oauth2_introspection_url": oauth2_introspection_url,
                 "radicale_user": self.config.get("radicale", "user"),
+                #"prefix": self.config.get("os","prefix")
             }
         )
         return context
@@ -232,7 +240,8 @@ class Dovecot(base.Installer):
         utils.exec_cmd("chmod +x /usr/local/bin/postlogin.sh")
         # Only root should have read access to the 10-ssl-keys.try
         # See https://github.com/modoboa/modoboa/issues/2570
-        utils.exec_cmd("chmod 600 /etc/dovecot/conf.d/10-ssl-keys.try")
+        
+        utils.exec_cmd("chmod 600 {}/dovecot/conf.d/10-ssl-keys.try".format(self.config.get("os","etc_prefix")))
         # Add mailboxes user to dovecot group for modoboa mailbox commands.
         # See https://github.com/modoboa/modoboa/issues/2157.
         if self.app_config["move_spam_to_junk"]:
@@ -253,11 +262,18 @@ class Dovecot(base.Installer):
         """
         code, output = utils.exec_cmd("service dovecot status")
         action = "start" if code else "restart"
+        
+        ## @@TODO@@ quick fix only for FreeBSD
+        # daemon must be enabled to start
+        system.enable_service(self.get_daemon_name())
+        if package.backend.FORMAT == "pkg":
+            
+            system.enable_service(self.get_daemon_name())    
         utils.exec_cmd(
             "service {} {} > /dev/null 2>&1".format(self.appname, action),
-            capture_output=False,
-        )
-        system.enable_service(self.get_daemon_name())
+                capture_output=False,
+            )
+        
 
     def backup(self, path):
         """Backup emails."""

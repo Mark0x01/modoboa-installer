@@ -29,7 +29,12 @@ PRIMARY_APPS = [
     "dovecot"
 ]
 
-
+## reduced for testing
+#PRIMARY_APPS = [
+#      "postfix","dovecot", "fail2ban", "radicale", "postfix"
+# ]
+ 
+ 
 def backup_system(config, args):
     """Launch backup procedure."""
     disclaimers.backup_disclaimer()
@@ -153,6 +158,8 @@ def main(input_args):
             sys.exit(1)
 
     utils.success("Welcome to Modoboa installer!\n")
+    utils.printcolor(f"OS Dist Name: {utils.dist_info()[0].lower()}, Python Ver: {utils.get_python_version()}",utils.BLUE)
+
 
     # Checks
     if not args.skip_checks:
@@ -194,6 +201,27 @@ def main(input_args):
     config.set("dovecot", "domain", args.domain)
     config.set("modoboa", "version", args.version)
     config.set("modoboa", "install_beta", str(args.beta))
+
+    ## @@TODO@@ find a more uniform way to customize per OS
+    if utils.dist_info()[0].lower() == "freebsd":
+        config.set("os", "etc_prefix", "/usr/local/etc")
+        config.set("os", "bin_prefix", "/usr/bin") 
+        config.set("uwsgi", "config_dir", "/usr/local/etc/uwsgi")
+        config.set("nginx", "config_dir", "/usr/local/etc/nginx")
+        config.set("razor", "config_dir", "/usr/local/etc/razor")
+        config.set("postfix", "config_dir", "/usr/local/etc/postfix")
+        config.set("postwhite", "config_dir", "/usr/local/etc/postwhite")
+        config.set("spamassassin", "config_dir", "/usr/local/etc/mail/spamassassin")
+        config.set("spamassassin","pyzor_bin_path", "/usr/local/bin/pyzor") 
+        config.set("amavis", "config_dir", "/usr/local/etc/amavis")
+        config.set("dovecot", "config_dir", "/usr/local/etc/dovecot")
+        config.set("fail2ban", "config_dir", "/usr/local/etc/fail2ban")
+        config.set("opendkim", "config_dir", "/usr/local/etc/mail")
+        config.set("radicale", "config_dir", "/usr/local/etc/mail")
+        #utils.update_config(args.configfile)
+        with open(args.configfile,"w") as fp1:
+            config.write(fp1)
+
 
     if config.get("antispam", "type") == "amavis":
         antispam_apps = ["amavis", "opendkim"]

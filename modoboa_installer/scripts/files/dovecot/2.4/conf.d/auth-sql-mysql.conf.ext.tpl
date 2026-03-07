@@ -68,7 +68,7 @@ sql_driver = %db_driver
 #   password = blarg
 #   dbname = virtual
 # }
-# sqlite /etc/dovecot/authdb.sqlite {
+# sqlite %{etc_prefix}/dovecot/authdb.sqlite {
 # }
 #
 #mysql /var/run/mysqld/mysqld.sock {

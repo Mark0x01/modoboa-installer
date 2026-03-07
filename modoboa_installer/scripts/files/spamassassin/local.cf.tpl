@@ -89,11 +89,11 @@ endif # Mail::SpamAssassin::Plugin::Shortcircuit
 
 # Razor
 use_razor2      1
-razor_config    /etc/razor/razor-agent.conf
+razor_config    %{etc_prefix}/razor/razor-agent.conf
 
 # Pyzor
 use_pyzor       1
-pyzor_path      /usr/bin/pyzor
+pyzor_path      %{pyzor_bin_path}/pyzor
 
 # DCC
 %{dcc_enabled}use_dcc         1

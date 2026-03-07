@@ -23,7 +23,7 @@ def install(appname: str, config, upgrade: bool, archive_path: str):
             not config.getboolean(appname, "enabled")):
         return
 
-    utils.printcolor("Installing {}".format(appname), utils.MAGENTA)
+    utils.printcolor("__init__.install: Installing {}".format(appname), utils.GREEN)
     script = load_app_script(appname)
     try:
         getattr(script, appname.capitalize())(config, upgrade, archive_path).run()

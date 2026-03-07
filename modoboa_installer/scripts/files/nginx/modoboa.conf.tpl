@@ -22,7 +22,7 @@ server {
     ssl_prefer_server_ciphers on;
     ssl_session_cache shared:SSL:10m;
     ssl_verify_depth 3;
-    ssl_dhparam /etc/nginx/dhparam.pem;
+    ssl_dhparam %etc_prefix/nginx/dhparam.pem;
 
     client_max_body_size 10M;
 

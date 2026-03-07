@@ -3,7 +3,7 @@
 
 # Config file for Radicale - A simple calendar server
 #
-# Place it into /etc/radicale/config (global)
+# Place it into %{etc_prefix}/radicale/config (global)
 # or ~/.config/radicale/config (user)
 #
 # The current values are the default ones
@@ -36,10 +36,10 @@
 #ssl = False
 
 # SSL certificate path
-#certificate = /etc/ssl/radicale.cert.pem
+#certificate = %{etc_prefix}/ssl/radicale.cert.pem
 
 # SSL private key
-#key = /etc/ssl/radicale.key.pem
+#key = %{etc_prefix}/ssl/radicale.key.pem
 
 # CA certificate for validating clients. This can be used to secure
 # TCP traffic between Radicale and a reverse proxy
@@ -141,7 +141,7 @@ type = none
 # If no config is given, simple information is printed on the standard output
 # For more information about the syntax of the configuration file, see:
 # http://docs.python.org/library/logging.config.html
-#config = /etc/radicale/logging
+#config = %{etc_prefix}/radicale/logging
 
 # Store all environment variables (including those set in the shell)
 #full_environment = False

@@ -44,7 +44,7 @@ submission inet n       -       -       -       -       smtpd
 pickup    unix  n       -       -       60      1       pickup
 cleanup   unix  n       -       -       -       0       cleanup
 ascleanup unix  n       -       -       -       0       cleanup
-  -o header_checks=pcre:/etc/postfix/anonymize_headers.pcre
+  -o header_checks=pcre:%{etc_prefix}/postfix/anonymize_headers.pcre
 qmgr      unix  n       -       n       300     1       qmgr
 #qmgr     unix  n       -       n       300     1       oqmgr
 tlsmgr    unix  -       -       -       1000?   1       tlsmgr

@@ -89,9 +89,12 @@ def install_package_from_repository(name, url, vcs="git", venv=None, **kwargs):
     utils.exec_cmd(cmd, **kwargs)
 
 
+      
 def setup_virtualenv(path, sudo_user=None):
     """Install a virtualenv if needed."""
+    utils.printcolor("Installing python virtualenv",utils.BLUE)
     if os.path.exists(path):
+        utils.printcolor("path exists in python.virtualenv",utils.YELLOW)
         return
     if utils.dist_name().startswith("centos"):
         python_binary = "python3"
@@ -99,7 +102,29 @@ def setup_virtualenv(path, sudo_user=None):
     else:
         python_binary = "python3"
         packages = ["python3-venv"]
-    package.backend.install_many(packages)
-    with utils.settings(sudo_user=sudo_user):
-        utils.exec_cmd("{} -m venv {}".format(python_binary, path))
-        install_packages(["pip", "setuptools"], venv=path, upgrade=True)
+    if utils.dist_name() == "freebsd":
+        packages = ["python3"] 
+
+
+    if utils.dist_name() == "freebsd":
+       python_binary = "python3"
+ #      packages = ["py311-django52", "py311-six", "py311-bcrypt" ,"py311-rrdtool", "py311-wheel","py311-bcrypt", "py311-dnspython",
+ #                 "py311-cryptography", "py311-lxml", "py311-pillow", "py311-libxml2-python", "py311-lxml"]
+       # , "py311-libxml2" is py311-libxml2-python
+       utils.exec_cmd("cp /usr/local/include/rrd_format.h /usr/include")
+       utils.exec_cmd("cp /usr/local/include/rrd.h /usr/include")
+       
+       package.backend.install_many(packages)
+       with utils.settings(sudo_user=sudo_user):
+         # --system-site-packages might fix some issues, 
+         utils.exec_cmd("{} -m venv {}".format(python_binary, path))
+#         utils.exec_cmd("{} -m venv {} --system-site-packages".format(python_binary, path))
+         install_packages(["pip", "setuptools"], venv=path, upgrade=False) # True breaks modoboa build
+
+    else:
+       package.backend.install_many(packages)
+       with utils.settings(sudo_user=sudo_user):
+         utils.exec_cmd("{} -m venv {}".format(python_binary, path))
+         install_packages(["pip", "setuptools"], venv=path, upgrade=True)
+
+

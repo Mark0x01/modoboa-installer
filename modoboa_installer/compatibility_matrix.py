@@ -21,6 +21,13 @@ COMPATIBILITY_MATRIX = {
         "modoboa-sievefilters": ">=1.1.1",
         "modoboa-webmail": ">=1.2.0",
     },
+    "2.3.0": {
+        "modoboa-webmail": ">=1.2.0",
+    },
+    "2.4.0": {
+    },        
+    "2.7.0": {
+    },
 }
 
 EXTENSIONS_AVAILABILITY = {

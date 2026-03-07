@@ -20,7 +20,8 @@ class Radicale(base.Installer):
     no_daemon = True
     packages = {
         "deb": ["supervisor"],
-        "rpm": ["supervisor"]
+        "rpm": ["supervisor"],
+        "pkg": ["py311-supervisor"]
     }
     with_user = True
 
@@ -53,6 +54,7 @@ class Radicale(base.Installer):
         )
         context.update({
             "oauth2_introspection_url": oauth2_introspection_url,
+            #"prefix": self.config.get("os","prefix")
         })
         return context
 
@@ -61,6 +63,9 @@ class Radicale(base.Installer):
         config_files = super().get_config_files()
         if package.backend.FORMAT == "deb":
             path = "supervisor=/etc/supervisor/conf.d/radicale.conf"
+        elif package.backend.FORMAT == "pkg":
+            utils.exec_cmd("mkdir -p /usr/local/etc/supervisor/conf.d")
+            path = "supervisor=/usr/local/etc/supervisor/conf.d/radicale.conf"
         else:
             path = "supervisor=/etc/supervisord.d/radicale.ini"
         config_files.append(path)

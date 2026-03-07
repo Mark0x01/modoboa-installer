@@ -24,9 +24,14 @@ def create_user(name, home=None):
                 name, extra_message), utils.YELLOW)
         return
     cmd = "useradd -m "
+    if utils.dist_name() == "freebsd":
+        cmd = 'pw useradd -m '
     if home:
         cmd += "-d {} ".format(home)
-    utils.exec_cmd("{} {}".format(cmd, name))
+    if utils.dist_name() == "freebsd":
+         utils.exec_cmd("{} -n {} -s /usr/local/bin/bash".format(cmd, name))
+    else:
+         utils.exec_cmd("{} {}".format(cmd, name))
     if home:
         utils.exec_cmd("chmod 755 {}".format(home))
 
@@ -43,12 +48,18 @@ def add_user_to_group(user, group):
     except KeyError:
         print("Group {} does not exist".format(group))
         sys.exit(1)
-    utils.exec_cmd("usermod -a -G {} {}".format(group, user))
+    if utils.dist_name() == "freebsd":
+        utils.exec_cmd("pw adduser -m -G {} -n {}".format(group, user))
+    else:
+        utils.exec_cmd("usermod -a -G {} {}".format(group, user))
 
 
 def enable_service(name):
     """Enable a service at startup."""
-    utils.exec_cmd("systemctl enable {}".format(name))
+    if utils.dist_name() == "freebsd":
+        utils.exec_cmd("sysrc {}_enable=yes".format(name))
+    else:
+        utils.exec_cmd("systemctl enable {}".format(name))
 
 
 def enable_and_start_service(name):
