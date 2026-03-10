@@ -1,3 +1,6 @@
+Tested with FreeBSD 14.3, python 3.11, postgres and amavis.
+
+
 FreeBSD requires the following package built from ports.
 
 security/clamav, mail/dovecot, mail/dovecot-pigeonhole, www/nginx, databases/opendbx, databases/sqlite3, mail/opendkim, mail/postfix, mail/spamassassin, mail/razor-agents
@@ -5,6 +8,10 @@ security/clamav, mail/dovecot, mail/dovecot-pigeonhole, www/nginx, databases/ope
 
 
 #Synth /usr/local/etc/synth/LiveSystem-build.conf:
+
+I had issues with synth building hundreds of packages, and it having issues with pkg upstream changes, so reverted to manual build using make install-missing-packages first.
+The pkg's were then stored where synth would have put them.
+
 
 
 security_amavisd-new_SET+= 7ZIP ARC ARJ CAB DOCS FILE IPV6 LZOP PGSQL RPM SPAMASSASIN UNRAR UNZOO ZOO 
@@ -56,7 +63,86 @@ local: {
   }
 
 
-then download and unpack the installer, open the folder and execute: ./run.py --interactive my.domain
+manual build example
+#amavisd-new
+cd /usr/ports/security/amavisd-new
+make install-missing-packages
+make WITH=7ZIP WITH=ARC WITH=ARJ WITH=CAB WITH=DOCS WITH=FILE WITH=IPV6 WITH=LZOP WITH=PGSQL WITH=RPM WITH=SPAMASSASIN WITH=UNRAR WITH=UNZOO WITH=ZOO package
+
+cp work/pkg/* /var/synth/live_packages/All
+
+#uwsgi
+cd /usr/ports/www/uwsgi
+make install-missing-packages
+make WITH=PCRE package
+cp work-py311/pkg/* /var/synth/live_packages/All
+
+
+cd /usr/ports/security/clamav
+make install-missing-packages
+make WITH=ARC WITH=ARJ  WITH=DOCS WITH=LHA WITH=MILTER WITH=PCRE WITH=UNRAR WITH=UNZOO package
+cp work/pkg/* /var/synth/live_packages/All
+
+
+
+cd /usr/ports/mail/dovecot
+make install-missing-packages
+make FLAVOR=pgsql WITH=DOCS WITH=EXAMPLES WITH=GSSAPI_NONE WITH=LIBWRAP WITH=LZ4 WITH=SQLITE package
+cp work-pgsql/pkg/* /var/synth/live_packages/All
+
+
+
+cd /usr/ports/mail/dovecot-pigeonhole
+make install-missing-packages
+make FLAVOR=pgsql WITH=DOCS WITH=GSSAPI_NONE WITH=MANAGESIEVE package
+cp work/pkg/* /var/synth/live_packages/All
+
+cd /usr/ports/www/nginx
+make install-missing-packages
+make WITH=DSO WITH=FILE_AIO WITH=HTTP WITH=HTTPV2 WITH=HTTPV3 WITH=HTTP_ADDITION WITH=HTTP_AUTH_REQ WITH=HTTP_CACHE WITH=HTTP_DAV WITH=HTTP_FLV WITH=HTTP_GUNZIP_FILTER WITH=HTTP_GZIP_STATIC WITH=HTTP_IMAGE_FILTER package
+cp work/pkg/* /var/synth/live_packages/All
+
+cd /usr/ports/databases/opendbx
+make install-missing-packages
+make  WITH=MYSQL WITH=NLS WITH=PGSQL WITH=SQLITE WITH=SQLITE3 package
+cp work/pkg/* /var/synth/live_packages/All
+
+cd /usr/ports/mail/opendkim
+make install-missing-packages
+make WITH=DOCS WITH=FILTER WITH=MEMCACHED WITH=OPENDBX WITH=QUERY_CACHE WITH=STOCK_RESOLVER package
+
+
+cd /usr/ports/mail/postfix
+make install-missing-packages
+make FLAVOR=pgsql WITH=BLACKLISTD WITH=CDB WITH=DOCS WITH=EAI WITH=PGSQL WITH=SQLITE WITH=TLS package
+cp work-pgsql/pkg/* /var/synth/live_packages/All
+
+
+
+cd /usr/ports/mail/spamassassin
+make install-missing-packages
+make WITH=AS_ROOT WITH=DKIM WITH=DOCS WITH=GNUPG WITH=SPF_QUERY WITH=SSL WITH=PYZOR WITH=RAZOR
+cp work/pkg/* /var/synth/live_packages/All
+
+cd /usr/ports/databases/sqlite3
+make install-missing-packages
+make WITH=SESSION FLAVOR=icu package
+cp work-icu/pkg/* /var/synth/live_packages/All
+
+cd /usr/ports/mail/razor-agents
+make package
+cp work/pkg/* /var/synth/live_packages/All
+
+
+cd /var/synth/live_packages
+pkg repo .
+
+
+
+Then download and unpack the installer, open the folder and execute: ./run.py --interactive my.domain
 
 It will ask questions, note the FreeBSD relevant choices for /usr/local/etc for some configuration files.
-Most will default to the FreeBSD defaults
+Most will default to the FreeBSD defaults.
+
+
+
