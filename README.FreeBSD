@@ -1,5 +1,6 @@
 Tested with FreeBSD 14.3, python 3.11, postgres and amavis.
 
+Requires Modoboa > 2.7.0 due to upstream changes in psycopg[binary] leaving FreeBSD unsupported.
 
 FreeBSD requires the following package built from ports.
 
