@@ -54,7 +54,7 @@ class Nginx(base.Installer):
             user = "www-data"
         elif package.backend.FORMAT == "pkg":
             #conf.d is not standard in FreeBSD
-            """no conf.d by default for freebsd 13"""
+            """no conf.d by default for freebsd 13/14"""
             utils.exec_cmd("mkdir -p  /usr/local/etc/nginx/conf.d")
             dst = os.path.join(
                 self.config_dir, "conf.d", "{}.conf".format(hostname))

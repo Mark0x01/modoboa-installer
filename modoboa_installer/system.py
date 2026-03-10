@@ -49,7 +49,7 @@ def add_user_to_group(user, group):
         print("Group {} does not exist".format(group))
         sys.exit(1)
     if utils.dist_name() == "freebsd":
-        utils.exec_cmd("pw adduser -m -G {} -n {}".format(group, user))
+        utils.exec_cmd("pw moduser -m -G {} -n {}".format(group, user))
     else:
         utils.exec_cmd("usermod -a -G {} {}".format(group, user))
 

@@ -212,7 +212,7 @@ def main(input_args):
         config.set("postfix", "config_dir", "/usr/local/etc/postfix")
         config.set("postwhite", "config_dir", "/usr/local/etc/postwhite")
         config.set("spamassassin", "config_dir", "/usr/local/etc/mail/spamassassin")
-        config.set("spamassassin","pyzor_bin_path", "/usr/local/bin/pyzor") 
+        config.set("spamassassin","pyzor_bin_path", "/usr/local/bin") 
         config.set("amavis", "config_dir", "/usr/local/etc/amavis")
         config.set("dovecot", "config_dir", "/usr/local/etc/dovecot")
         config.set("fail2ban", "config_dir", "/usr/local/etc/fail2ban")

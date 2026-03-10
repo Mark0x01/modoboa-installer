@@ -25,9 +25,9 @@ class Opendkim(base.Installer):
 
     def get_daemon_name(self):
         """Return appropriate daemon name."""
-        if package.backend.FORMAT !== "pkg":
+        if package.backend.FORMAT != "pkg":
             return "opendkim"
-        return "milter-opendkim"
+        return "milteropendkim"
         
     def get_packages(self):
         """Additional packages."""
@@ -127,10 +127,11 @@ class Opendkim(base.Installer):
                  "s/^REQUIRE:(.*)$/REQUIRE: $1 {}/".format(dbservice))
                 utils.exec_cmd(
                      "perl -pi -e '{}' /usr/local/etc/rc.d/milter-opendkim".format(pattern))
-                     # service name doesn't match sysrc name
-                     system.enable_service("milteropendkim")
-                     utils.exec_cmd("sysrc milteropendkim_uid={}".format(self.app_config["user"]))                    
-                     utils.exec_cmd("sysrc -x opendkim_enable")
+                # rc.d file/service name is milter-opendkim which doesn't match sysrc name 
+#                system.enable_service("milteropendkim")
+                utils.exec_cmd("sysrc milteropendkim_uid={}".format(self.app_config["user"]))                    
+                system.restart_service("milter-opendkim")
+
 
         else:
           if (self.dbengine != "postgres" and package.backend.FORMAT == "deb"):
