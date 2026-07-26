@@ -1,4 +1,36 @@
-Tested with FreeBSD 14.3, python 3.11, postgres and amavis.
+July 2026 
+This is a work in progress.
+Current work is using FreeBSD 14.4 and I'm focusing on getting it to work reliably with older modoboa versions.
+Upstream issues with FreeBSD ports are causing some problems with spamassassin.
+
+
+There are many issues to resolve before a stable working version is achieved.
+
+Older Modoboa versions require Python 3.11 to build.
+There will be pip install issues.
+
+This may work for you:
+modoboa 2.3.0 will only support python 3.11
+#preinstall venv
+cd /usr/local/www/modoboa
+python3.11 -m venv env
+
+#check
+python3 -V
+Python 3.11.15
+
+#preinstall problematic stuff
+pip install setuptools==58.0.0 wheel
+pip install gevent==24.2.1 --no-build-isolation
+CFLAGS="-Wno-error=incompatible-function-pointer-types -O0" pip install lxml==4.9.4
+pip install modoboa==2.3.0
+
+deactivate
+exit
+
+Then run the modoboa installer.
+
+The current installer here is tested with FreeBSD 14.3, python 3.11, postgres and amavis.
 
 Requires Modoboa > 2.7.0 due to upstream changes in psycopg[binary] leaving FreeBSD unsupported.
 
